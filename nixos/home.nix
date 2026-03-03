@@ -13,6 +13,7 @@
       nixfmt
       zsh-fzf-tab
       neofetch
+      pgadmin4-desktopmode
       slack
       zoom
     ];

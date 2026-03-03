@@ -8,7 +8,13 @@
     };
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
   };
-  outputs = { self, nixpkgs, home-manager, nixos-hardware }@inputs:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      home-manager,
+      nixos-hardware,
+    }@inputs:
     {
       nixosConfigurations = {
         athena = nixpkgs.lib.nixosSystem {

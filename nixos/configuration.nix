@@ -5,10 +5,10 @@
 { config, pkgs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -27,6 +27,10 @@
 
   # Enable networking
   networking.networkmanager.enable = true;
+
+  services.resolved = {
+    enable = true;
+  };
 
   # Set your time zone.
   time.timeZone = "America/Los_Angeles";
@@ -104,10 +108,13 @@
   users.users.irisrad = {
     isNormalUser = true;
     description = "irisrad";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
     shell = pkgs.zsh;
     packages = with pkgs; [
-    #  thunderbird
+      #  thunderbird
     ];
   };
 
@@ -122,8 +129,8 @@
   environment.systemPackages = with pkgs; [
     git
     helix
-  #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  #  wget
+    #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    #  wget
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -139,15 +146,55 @@
   # Enable the OpenSSH daemon.
   # services.openssh.enable = true;
   # services.openssh = {
-    # enable = true;
-    # ports = [ 3478 ];
-    # settings = {
-    #   PasswordAuthentication = true;
-    #   KbdInteractiveAuthentication = false;
-    #   PermitRootLogin = "no";
-    #   AllowUsers = [ "irisrad" ];
-    # };
+  # enable = true;
+  # ports = [ 3478 ];
+  # settings = {
+  #   PasswordAuthentication = true;
+  #   KbdInteractiveAuthentication = false;
+  #   PermitRootLogin = "no";
+  #   AllowUsers = [ "irisrad" ];
   # };
+  # };
+
+  services.openvpn = {
+    servers = {
+      client = {
+        config = ''
+          setenv FRIENDLY_NAME "CECS full tunnel"
+          client
+          remote-cert-tls server
+          dev tun
+          proto udp
+          hand-window 30
+          remote-random
+          remote openvpn-04.cecs.pdx.edu 1194
+          remote openvpn-05.cecs.pdx.edu 1194
+          remote openvpn-06.cecs.pdx.edu 1194
+          verify-x509-name openvpn.cecs.pdx.edu name
+          resolv-retry 10
+          nobind
+          persist-key
+          persist-tun
+          ca /home/irisrad/vpn/catca.pem
+          auth-user-pass /home/irisrad/vpn/catca-pass.txt
+          verb 3
+          script-security 3
+          up ${pkgs.openvpn}/libexec/update-systemd-resolved
+          down ${pkgs.openvpn}/libexec/update-systemd-resolved
+          redirect-gateway
+          route-ipv6 ::/0
+          setenv CLIENT_CERT 0
+        '';
+      };
+    };
+  };
+
+  virtualisation.docker = {
+    rootless = {
+      enable = true;
+      setSocketVariable = true;
+    };
+  };
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
